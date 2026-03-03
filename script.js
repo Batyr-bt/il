@@ -12,6 +12,8 @@ const INVITE = {
     // Координаты из 2GIS для The Moon (Астана)
     lat: 51.121149,
     lon: 71.424089,
+    provider: "yandex",
+    zoom: 16,
     zoomBoxDelta: { lat: 0.01, lon: 0.015 },
   },
   timeline: [
@@ -51,6 +53,26 @@ function capitalize(s) {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
+function normalizeToName(name) {
+  // Trim + remove common invisible chars that can sneak in from copy/paste.
+  const n = String(name || "")
+    .normalize("NFC")
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    .trim();
+  if (!n) return "";
+
+  const first = n.charAt(0);
+  const rest = n.slice(1);
+
+  // Enforce Cyrillic capital "А" for the first letter.
+  // Users sometimes paste Latin A/a (U+0041/U+0061) or Cyrillic "а" (U+0430).
+  if (first === "A" || first === "a" || first === "А" || first === "а") {
+    return "А" + rest;
+  }
+
+  return first.toUpperCase() + rest;
+}
+
 function setText(id, value) {
   const el = document.getElementById(id);
   if (el) el.textContent = value;
@@ -80,6 +102,13 @@ function buildOsmEmbed({ lat, lon, zoomBoxDelta }) {
 
   const marker = `${lat.toFixed(6)}%2C${lon.toFixed(6)}`;
   return `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${marker}`;
+}
+
+function buildYandexEmbed({ lat, lon, zoom }) {
+  const z = Number.isFinite(zoom) ? zoom : 16;
+  const ll = `${lon.toFixed(6)}%2C${lat.toFixed(6)}`;
+  const pt = `${lon.toFixed(6)}%2C${lat.toFixed(6)}%2Cpm2rdm`;
+  return `https://yandex.ru/map-widget/v1/?ll=${ll}&z=${encodeURIComponent(String(z))}&pt=${pt}&l=map&lang=ru_RU`;
 }
 
 function pickTimelineIcon(text) {
@@ -112,7 +141,10 @@ function init() {
   const timelineList = document.getElementById("timelineList");
   const mapFrame = document.getElementById("mapFrame");
 
-  setText("detailsTitle", `Для ${INVITE.toName}`);
+  const toName = normalizeToName(INVITE.toName);
+
+  // NBSP prevents visual "sticking" in script fonts.
+  setText("detailsTitle", `Для\u00A0${toName || "тебя"}`);
   setText(
     "detailsSub",
     `${INVITE.when.displayFallback} • ${INVITE.where.split("—")[0].trim()}`
@@ -161,13 +193,21 @@ function init() {
   }
 
   if (mapFrame && INVITE.map?.lat && INVITE.map?.lon) {
-    mapFrame.setAttribute("src", buildOsmEmbed(INVITE.map));
+    const provider = (INVITE.map.provider || "yandex").toLowerCase();
+    const src = provider === "osm" ? buildOsmEmbed(INVITE.map) : buildYandexEmbed(INVITE.map);
+    mapFrame.setAttribute("src", src);
   }
 
   const open = () => {
     if (!app) return;
+    app.dataset.anim = "opening";
     app.dataset.state = "open";
     if (openBtn) openBtn.setAttribute("aria-expanded", "true");
+
+    // Allow re-triggering the opening animation on next open.
+    window.setTimeout(() => {
+      if (app.dataset.anim === "opening") delete app.dataset.anim;
+    }, 700);
   };
 
   const close = () => {

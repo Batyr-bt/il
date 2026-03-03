@@ -9,6 +9,11 @@
   --gold2: #8a5b2a;
   --shadow: 0 18px 60px rgba(0, 0, 0, 0.55);
   --sheet: rgba(16, 5, 6, 0.88);
+
+  /* Light “paper” palette for opened state */
+  --paper0: #f7f0da;
+  --paper1: #efe2c3;
+  --paper2: rgba(255, 255, 255, 0.78);
 }
 
 * {
@@ -107,6 +112,30 @@ body {
   to {
     transform: translateX(140%) rotate(12deg);
     opacity: 0;
+  }
+}
+
+@keyframes overlayIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes sheetIn {
+  0% {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(-6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -309,7 +338,11 @@ body {
   inset: 0;
   display: grid;
   align-items: end;
-  background: rgba(246, 236, 225, 0.96);
+  background:
+    radial-gradient(900px 420px at 50% 0%, rgba(255, 255, 255, 0.55), rgba(247, 240, 218, 0.98) 55%),
+    radial-gradient(520px 280px at 18% 38%, rgba(255, 255, 255, 0.22), transparent 62%),
+    radial-gradient(560px 300px at 85% 42%, rgba(255, 255, 255, 0.20), transparent 64%),
+    linear-gradient(180deg, var(--paper0), var(--paper1));
   opacity: 0;
   pointer-events: none;
   transition: opacity 220ms ease;
@@ -318,6 +351,10 @@ body {
 .app[data-state="open"] .overlay {
   opacity: 1;
   pointer-events: auto;
+}
+
+.app[data-state="open"][data-anim="opening"] .overlay {
+  animation: overlayIn 240ms ease-out both;
 }
 
 .app[data-state="open"] .sealWrap {
@@ -330,10 +367,23 @@ body {
   width: 100%;
   max-width: 520px;
   margin: 0 auto;
-  background: transparent;
-  border: 0;
-  box-shadow: none;
-  padding: max(18px, env(safe-area-inset-top)) 16px max(18px, env(safe-area-inset-bottom));
+  border-radius: 26px 26px 0 0;
+  background:
+    radial-gradient(900px 520px at 50% -10%, rgba(255, 255, 255, 0.70), rgba(255, 255, 255, 0.40) 62%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.36)),
+    repeating-linear-gradient(
+      135deg,
+      rgba(43, 15, 18, 0.018) 0px,
+      rgba(43, 15, 18, 0.018) 2px,
+      rgba(255, 255, 255, 0.0) 2px,
+      rgba(255, 255, 255, 0.0) 8px
+    ),
+    linear-gradient(180deg, var(--paper0), var(--paper1));
+  border: 1px solid rgba(43, 15, 18, 0.10);
+  box-shadow:
+    0 -18px 60px rgba(0, 0, 0, 0.16),
+    0 -2px 0 rgba(255, 255, 255, 0.40);
+  padding: max(18px, env(safe-area-inset-top)) 16px max(22px, env(safe-area-inset-bottom));
   transform: translateY(18px);
   opacity: 0;
   transition: transform 260ms cubic-bezier(0.2, 0.9, 0.2, 1), opacity 240ms ease;
@@ -341,13 +391,17 @@ body {
   overflow: auto;
   -webkit-overflow-scrolling: touch;
   display: grid;
-  gap: 14px;
+  gap: 16px;
   color: #2b0f12;
 }
 
 .app[data-state="open"] .sheet {
   transform: translateY(0);
   opacity: 1;
+}
+
+.app[data-state="open"][data-anim="opening"] .sheet {
+  animation: sheetIn 620ms cubic-bezier(0.2, 0.9, 0.2, 1) both;
 }
 
 .detailsTitle {
@@ -381,7 +435,7 @@ body {
   margin: 0;
   display: grid;
   gap: 10px;
-  background: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.68);
   border: 1px solid rgba(43, 15, 18, 0.10);
   border-radius: 18px;
   padding: 12px 12px;
@@ -402,17 +456,18 @@ body {
   text-transform: uppercase;
   font-size: 11px;
   line-height: 1.25;
-  padding-top: 2px;
+  padding-top: 0;
 }
 
 .row dd {
   margin: 0;
   color: rgba(43, 15, 18, 0.92);
-  line-height: 1.35;
+  line-height: 1.25;
 }
 
 .whereName {
   font-weight: 600;
+  line-height: 1.25;
 }
 
 .whereLink {
@@ -436,12 +491,12 @@ body {
   white-space: pre-line;
   border-radius: 16px;
   border: 1px solid rgba(43, 15, 18, 0.10);
-  background: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.68);
 }
 
 /* ---- Dress-code section (reference-like) ---- */
 .dress {
-  background: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.68);
   border: 1px solid rgba(43, 15, 18, 0.10);
   border-radius: 18px;
   padding: 14px 12px;
@@ -500,7 +555,7 @@ body {
 }
 
 .timelineBlock {
-  background: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.68);
   color: #2b0f12;
   border-radius: 18px;
   border: 1px solid rgba(43, 15, 18, 0.10);
@@ -747,6 +802,11 @@ body {
   .overlay,
   .sheet {
     transition: none;
+  }
+
+  .app[data-anim="opening"] .overlay,
+  .app[data-anim="opening"] .sheet {
+    animation: none;
   }
 }
 
